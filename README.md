@@ -158,7 +158,7 @@ Retrieves stories based on a specific category and parameters.
 - **Example**:
 
 ```http
-POST /stories/category/action-26/trang-1.html?sheet=1&status=1&country=1&sort=1
+POST /stories/category/action-26/trang-1.html?sheet=1&status=2&country=1&sort=1
 ```
 
 ### Author Story
