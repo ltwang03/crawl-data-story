@@ -2,12 +2,14 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectBrowser } from 'nest-puppeteer';
 import { Browser, Page } from 'puppeteer';
+import { CrawlUtil } from './crawl.util';
 
 @Injectable()
 export class CrawlService {
   constructor(
     @InjectBrowser() private readonly browser: Browser,
     private configService: ConfigService,
+    private crawlUntil: CrawlUtil,
   ) {}
   logger = new Logger(CrawlService.name);
   async getSuggestStory() {
@@ -168,32 +170,7 @@ export class CrawlService {
       'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
     );
     await page.goto(`${END_POINT}tim-kiem.html?q=${story}`);
-    const [avatarList, linkList] = await Promise.all([
-      page.$$eval('.book_avatar>a>img', (options) => {
-        return options.map((el) => {
-          const avatar = el.getAttribute('src');
-          const name = el.getAttribute('alt');
-          return { avatar, name };
-        });
-      }),
-      page.$$eval('.book_avatar>a', (options) => {
-        return options.map((el) => {
-          const link = el.getAttribute('href');
-          return { link };
-        });
-      }),
-    ]);
-
-    return avatarList.map((item, index) => {
-      return {
-        avatar: item.avatar,
-        name: item.name,
-        link: linkList[index].link.replace(
-          `${END_POINT}truyen-tranh/`,
-          `${HOST}api/stories/story/`,
-        ),
-      };
-    });
+    return this.crawlUntil.getDataStory(page, HOST, END_POINT);
   }
   async newStory(query) {
     const HOST = this.configService.get('HOST');
@@ -203,38 +180,7 @@ export class CrawlService {
       'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
     );
     await page.goto(`${END_POINT}truyen-moi-cap-nhat/trang-${query}.html`);
-    const [avatarList, nameList, last_chapter] = await Promise.all([
-      page.$$eval('.book_avatar>a>img', (options) => {
-        return options.map((el) => {
-          const avatar = el.getAttribute('src');
-          return { avatar };
-        });
-      }),
-      page.$$eval('.book_info>.book_name>h3>a', (options) => {
-        return options.map((el) => {
-          const name = el.textContent;
-          const link = el.href;
-          return { name, link };
-        });
-      }),
-      page.$$eval('.last_chapter>a', (options) => {
-        return options.map((el) => {
-          const last_chapter = el.textContent;
-          return { last_chapter };
-        });
-      }),
-    ]);
-    return avatarList.map((item, index) => {
-      return {
-        avatar: item.avatar,
-        story_name: nameList[index].name,
-        story_detail: nameList[index].link.replace(
-          `${END_POINT}truyen-tranh/`,
-          `${HOST}api/stories/story/`,
-        ),
-        last_chap: last_chapter[index].last_chapter,
-      };
-    });
+    return this.crawlUntil.getDataStory(page, HOST, END_POINT);
   }
   async getCategories(): Promise<any> {
     const HOST = this.configService.get('HOST');
@@ -273,38 +219,7 @@ export class CrawlService {
     await page.goto(
       `${END_POINT}the-loai/${category}/trang-${sheet}.html?status=${status}&country=${country}&sort=${sort}`,
     );
-    const [avatarList, nameList, last_chapter] = await Promise.all([
-      page.$$eval('.book_avatar>a>img', (options) => {
-        return options.map((el) => {
-          const avatar = el.getAttribute('src');
-          return { avatar };
-        });
-      }),
-      page.$$eval('.book_info>.book_name>h3>a', (options) => {
-        return options.map((el) => {
-          const name = el.textContent;
-          const link = el.href;
-          return { name, link };
-        });
-      }),
-      page.$$eval('.last_chapter>a', (options) => {
-        return options.map((el) => {
-          const last_chapter = el.textContent;
-          return { last_chapter };
-        });
-      }),
-    ]);
-    return avatarList.map((item, index) => {
-      return {
-        avatar: item.avatar,
-        story_name: nameList[index].name,
-        story_detail: nameList[index].link.replace(
-          `${END_POINT}truyen-tranh/`,
-          `${HOST}api/stories/story/`,
-        ),
-        last_chap: last_chapter[index].last_chapter,
-      };
-    });
+    return this.crawlUntil.getDataStory(page, HOST, END_POINT);
   }
   async authorStory(author) {
     const HOST = this.configService.get('HOST');
@@ -315,37 +230,6 @@ export class CrawlService {
     );
     await page.goto(`${END_POINT}tac-gia/${author}`);
 
-    const [avatarList, nameList, last_chapter] = await Promise.all([
-      page.$$eval('.book_avatar>a>img', (options) => {
-        return options.map((el) => {
-          const avatar = el.getAttribute('src');
-          return { avatar };
-        });
-      }),
-      page.$$eval('.book_info>.book_name>h3>a', (options) => {
-        return options.map((el) => {
-          const name = el.textContent;
-          const link = el.href;
-          return { name, link };
-        });
-      }),
-      page.$$eval('.last_chapter>a', (options) => {
-        return options.map((el) => {
-          const last_chapter = el.textContent;
-          return { last_chapter };
-        });
-      }),
-    ]);
-    return avatarList.map((item, index) => {
-      return {
-        avatar: item.avatar,
-        story_name: nameList[index].name,
-        story_detail: nameList[index].link.replace(
-          `${END_POINT}truyen-tranh/`,
-          `${HOST}api/stories/story/`,
-        ),
-        last_chap: last_chapter[index].last_chapter,
-      };
-    });
+    return this.crawlUntil.getDataStory(page, HOST, END_POINT);
   }
 }
